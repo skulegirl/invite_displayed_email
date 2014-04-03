@@ -17,22 +17,14 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
     }
 
     $form['from'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('From'),
-    );
-    $form['from']['display_name'] = array(
       '#type' => 'textfield',
-      '#title' => t('Display name for email'),
-      '#description' => t('The display name that will show to the recipient with your email address. Default is your username'),
-      '#size' => 64,
+      '#title' => t('From'),
+      '#description' => t('Choose the display name that will show to the recipient with your email address. Default is your username.'),
+      '#size' => 32,
       '#maxlength' => 64,
       '#default_value' => $user->name,
+      '#field_suffix' => '&lt'.check_plain($from).'&gt',
     );      
-    $form['from']['email'] = array(
-      '#type' => 'item',
-      '#title' => t('email address'),
-      '#value' => check_plain($from),
-    );
 
     // put our submit handler at the beginning that add data to the session
     array_unshift($form['#submit'], 'invite_displayed_email_addtosession');
@@ -48,7 +40,7 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 function invite_displayed_email_addtosession($form, &$form_state)
 {
   // we need to save this in the session and then pull it out in the hook_mail_alter implementation
-  $_SESSION['invite_displayed_email'] = $form_state['values']['display_name'];
+  $_SESSION['invite_displayed_email'] = $form_state['values']['from'];
 }
 
 /***
