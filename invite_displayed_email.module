@@ -1,0 +1,77 @@
+<?php
+
+/** 
+ ** Implementation of hook_form_alter
+ */
+function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
+{
+  if ($form_id == 'invite_form')
+  {
+    global $user;
+    if ($user->uid && variable_get('invite_use_users_email', 0)) {
+      $from = $user->mail;
+    }
+    else {
+      // do nothing - don't alter display name for site mail address
+      return;
+    }
+
+    $form['from'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('From'),
+    );
+    $form['from']['display_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Display name for email'),
+      '#description' => t('The display name that will show to the recipient with your email address. Default is your username'),
+      '#size' => 64,
+      '#maxlength' => 64,
+      '#default_value' => $user->name,
+    );      
+    $form['from']['email'] = array(
+      '#type' => 'item',
+      '#title' => t('email address'),
+      '#value' => check_plain($from),
+    );
+
+    // put our submit handler at the beginning that add data to the session
+    array_unshift($form['#submit'], 'invite_displayed_email_addtosession');
+    // put a submit handler at the end of the submit queue to clear the session
+    $form['#submit'][] = 'invite_displayed_email_clearsession';
+  }
+}
+
+/***
+ * submit handler. Needs to execute before default one because it saves the display name to the 
+ * session which is then used by the default submit handler when it does the drupal_mail call.
+ */
+function invite_displayed_email_addtosession($form, &$form_state)
+{
+  // we need to save this in the session and then pull it out in the hook_mail_alter implementation
+  $_SESSION['invite_displayed_email'] = $form_state['values']['display_name'];
+}
+
+/***
+ * submit handler to clear the session after the invite submit handler runs
+ */
+function invite_displayed_email_clearsession($form, &$form_state)
+{
+  unset($_SESSION['invite_displayed_email']);
+}
+
+/***
+ * Implement hook_mail_alter
+ */
+function invite_displayed_email_mail_alter(&$message)
+{ 
+  if ($message['id'] == 'invite_invite' && isset($_SESSION['invite_displayed_email']))
+  {
+    global $user;
+    $from = $_SESSION['invite_displayed_email'] . ' <'. $user->mail . '>';
+    $message['from'] = $from;
+    $message['headers']['From'] = $from;
+    if (variable_get('invite_use_users_email_replyto', 0)) {
+      $message['headers']['Reply-To'] = $from;
+    }
+  }
+}
