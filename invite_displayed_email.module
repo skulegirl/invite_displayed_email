@@ -7,6 +7,13 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 {
   if ($form_id == 'invite_form')
   {
+    $op = $form['#parameters'][2];
+    if ($op != 'page')
+    {
+      // do nothing - only want to alter the form for the page
+      return; 
+    }
+
     global $user;
     if ($user->uid && variable_get('invite_use_users_email', 0)) {
       $from = $user->mail;
