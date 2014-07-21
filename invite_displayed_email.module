@@ -7,7 +7,7 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 {
   if ($form_id == 'invite_form')
   {
-    $op = $form['#parameters'][2];
+    $op = $form['#op'];
     if ($op != 'page')
     {
       // do nothing - only want to alter the form for the page
@@ -16,21 +16,20 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 
     global $user;
     if ($user->uid && variable_get('invite_use_users_email', 0)) {
-      $from = $user->mail;
+      $from = '&lt' . check_plain($user->mail) . '%gt';
     }
     else {
-      // do nothing - don't alter display name for site mail address
-      return;
+      $from = ""; // just leave the from blank in this case
     }
 
     $form['from'] = array(
       '#type' => 'textfield',
       '#title' => t('From'),
-      '#description' => t('Choose the display name that will show to the recipient with your email address. Default is your username.'),
+      '#description' => t('Choose the display name that will show to the recipient in the "From" field. Default is your username.'),
       '#size' => 32,
       '#maxlength' => 64,
       '#default_value' => $user->name,
-      '#field_suffix' => '&lt'.check_plain($from).'&gt',
+      '#field_suffix' => $from,
     );      
 
     // put our submit handler at the beginning that add data to the session
@@ -65,12 +64,12 @@ function invite_displayed_email_mail_alter(&$message)
 { 
   if ($message['id'] == 'invite_invite' && isset($_SESSION['invite_displayed_email']))
   {
-    global $user;
-    $from = $_SESSION['invite_displayed_email'] . ' <'. $user->mail . '>';
+    $from = $_SESSION['invite_displayed_email'] . ' <'. $message['from'] . '>';
+    $reply_to = $_SESSION['invite_displayed_email'] . ' <'. $message['headers']['Reply-To'] . '>';
     $message['from'] = $from;
     $message['headers']['From'] = $from;
     if (variable_get('invite_use_users_email_replyto', 0)) {
-      $message['headers']['Reply-To'] = $from;
+      $message['headers']['Reply-To'] = $reply_to;
     }
   }
 }
