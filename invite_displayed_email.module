@@ -7,7 +7,7 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 {
   if ($form_id == 'invite_form')
   {
-    $op = $form['#op'];
+    $op = $form['#parameters'][2];
     if ($op != 'page')
     {
       // do nothing - only want to alter the form for the page
@@ -16,7 +16,7 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 
     global $user;
     if ($user->uid && variable_get('invite_use_users_email', 0)) {
-      $from = '&lt' . check_plain($user->mail) . '%gt';
+      $from = '&lt' . check_plain($user->mail) . '&gt';
     }
     else {
       $from = ""; // just leave the from blank in this case
@@ -67,6 +67,7 @@ function invite_displayed_email_mail_alter(&$message)
     $from = $_SESSION['invite_displayed_email'] . ' <'. $message['from'] . '>';
     $reply_to = $_SESSION['invite_displayed_email'] . ' <'. $message['headers']['Reply-To'] . '>';
     $message['from'] = $from;
+    $message['headers']['Sender'] = $from;
     $message['headers']['From'] = $from;
     if (variable_get('invite_use_users_email_replyto', 0)) {
       $message['headers']['Reply-To'] = $reply_to;
