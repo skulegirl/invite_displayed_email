@@ -7,7 +7,7 @@ function invite_displayed_email_form_alter(&$form, $form_state, $form_id)
 {
   if ($form_id == 'invite_form')
   {
-    $op = $form['#parameters'][2];
+    $op = $form['#op'];
     if ($op != 'page')
     {
       // do nothing - only want to alter the form for the page
